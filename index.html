@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Selection Sort Visualization with Educational Enhancements</title>
+  <style>
+    /* Global Styles */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #2c3e50, #bdc3c7);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      align-items: center;
+      justify-content: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    
+    /* Wrapper for overall content */
+    .wrapper {
+      width: 90%;
+      max-width: 1200px;
+      background-color: rgba(0, 0, 0, 0.6);
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+    }
+    
+    /* Left panel: simulation */
+    .simulation-panel {
+      flex: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    
+    /* Right panel: pseudocode and metrics */
+    .education-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+    
+    /* Array container styling */
+    #array-container {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      height: 300px;
+      width: 100%;
+      margin-bottom: 20px;
+      border: 2px solid #fff;
+      border-radius: 5px;
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 10px;
+    }
+    
+    .bar {
+      width: 40px;
+      margin: 0 5px;
+      background-color: #3498db;
+      display: inline-block;
+      text-align: center;
+      transition: all 0.3s ease;
+      border-radius: 3px;
+    }
+    
+    .bar.comparing {
+      background-color: #e74c3c;
+    }
+    
+    .bar.swapping {
+      background-color: #f1c40f;
+    }
+    
+    /* Controls styling */
+    .controls {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+    }
+    
+    .controls button,
+    .controls input {
+      padding: 10px 15px;
+      font-size: 1em;
+      border: none;
+      border-radius: 5px;
+    }
+    
+    .controls button {
+      background-color: #27ae60;
+      color: #fff;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    
+    .controls button:hover {
+      background-color: #2ecc71;
+    }
+    
+    .controls input {
+      width: 250px;
+      text-align: center;
+    }
+    
+    /* Progress and Metrics */
+    #progress, #metrics {
+      font-size: 1.2em;
+      margin-top: 10px;
+    }
+    
+    /* Pseudocode styling */
+    #pseudocode {
+      background-color: rgba(255, 255, 255, 0.1);
+      padding: 15px;
+      border-radius: 5px;
+      font-family: monospace;
+      white-space: pre-wrap;
+      line-height: 1.6;
+    }
+    
+    .highlight {
+      background-color: rgba(241, 196, 15, 0.3);
+      border-left: 3px solid #f1c40f;
+      padding-left: 5px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Selection Sort Visualization</h1>
+  <div class="wrapper">
+    <!-- Left Panel: Simulation and Controls -->
+    <div class="simulation-panel">
+      <div id="array-container"></div>
+      <div id="progress">Progress: 0%</div>
+      <div class="controls">
+        <input type="text" id="arrayInput" placeholder="Enter values, e.g., 64,25,12,22,11">
+        <button id="setArrayBtn">Set Array</button>
+        <button id="startBtn">Start Sorting</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+    </div>
+    <!-- Right Panel: Pseudocode and Metrics -->
+    <div class="education-panel">
+      <div id="pseudocode">
+<span id="line1">1. function selectionSort(arr):</span>
+<span id="line2">2.   for i = 0 to n-2:</span>
+<span id="line3">3.     minIndex = i</span>
+<span id="line4">4.     for j = i+1 to n-1:</span>
+<span id="line5">5.       if arr[j] < arr[minIndex]:</span>
+<span id="line6">6.         minIndex = j</span>
+<span id="line7">7.     if minIndex != i:</span>
+<span id="line8">8.       swap(arr[i], arr[minIndex])</span>
+      </div>
+      <div id="metrics">
+        Comparisons: <span id="compCount">0</span><br>
+        Swaps: <span id="swapCount">0</span>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    // Configuration
+    const delay = 800; // Delay in ms between steps
+    let array = [64, 25, 12, 22, 11, 90, 37, 45];
+    let comparisons = 0;
+    let swaps = 0;
+    
+    const container = document.getElementById('array-container');
+    const progressText = document.getElementById('progress');
+    const compCountText = document.getElementById('compCount');
+    const swapCountText = document.getElementById('swapCount');
+    const startBtn = document.getElementById('startBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const setArrayBtn = document.getElementById('setArrayBtn');
+    const arrayInput = document.getElementById('arrayInput');
+    
+    // Render the array as bars in the container
+    function renderArray(arr) {
+      container.innerHTML = '';
+      arr.forEach(value => {
+        const bar = document.createElement('div');
+        bar.classList.add('bar');
+        bar.style.height = `${value * 3}px`; // Scale height for visual effect
+        bar.textContent = value;
+        container.appendChild(bar);
+      });
+    }
+    
+    // Utility function to delay actions
+    function sleep(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+    
+    // Function to highlight a specific pseudocode line
+    async function highlightLine(lineId, duration = delay) {
+      const line = document.getElementById(lineId);
+      line.classList.add('highlight');
+      await sleep(duration);
+      line.classList.remove('highlight');
+    }
+    
+    // Reset metrics
+    function resetMetrics() {
+      comparisons = 0;
+      swaps = 0;
+      compCountText.textContent = comparisons;
+      swapCountText.textContent = swaps;
+    }
+    
+    // Selection Sort with visualization and educational enhancements
+    async function selectionSortVisual(arr) {
+      const bars = container.querySelectorAll('.bar');
+      const n = arr.length;
+      
+      for (let i = 0; i < n - 1; i++) {
+        let minIndex = i;
+        progressText.textContent = `Progress: ${Math.round((i / n) * 100)}%`;
+        
+        // Highlight pseudocode lines for outer loop and setting minIndex
+        await highlightLine('line2');
+        await highlightLine('line3');
+        
+        // Highlight the element being considered
+        bars[i].classList.add('comparing');
+        await sleep(delay);
+        
+        for (let j = i + 1; j < n; j++) {
+          comparisons++;
+          compCountText.textContent = comparisons;
+          await highlightLine('line4');
+          bars[j].classList.add('comparing');
+          await sleep(delay);
+    
+          await highlightLine('line5');
+          if (arr[j] < arr[minIndex]) {
+            if (minIndex !== i) {
+              bars[minIndex].classList.remove('comparing');
+            }
+            minIndex = j;
+            await highlightLine('line6');
+          } else {
+            bars[j].classList.remove('comparing');
+          }
+        }
+    
+        // Swap if a smaller element was found
+        await highlightLine('line7');
+        if (minIndex !== i) {
+          swaps++;
+          swapCountText.textContent = swaps;
+          bars[i].classList.add('swapping');
+          bars[minIndex].classList.add('swapping');
+          await sleep(delay);
+    
+          // Highlight pseudocode swap step
+          await highlightLine('line8');
+    
+          [arr[i], arr[minIndex]] = [arr[minIndex], arr[i]];
+    
+          // Swap heights and labels in the UI
+          const tempHeight = bars[i].style.height;
+          const tempText = bars[i].textContent;
+          bars[i].style.height = bars[minIndex].style.height;
+          bars[i].textContent = bars[minIndex].textContent;
+          bars[minIndex].style.height = tempHeight;
+          bars[minIndex].textContent = tempText;
+    
+          await sleep(delay);
+          bars[i].classList.remove('swapping');
+          bars[minIndex].classList.remove('swapping');
+        }
+    
+        bars[i].classList.remove('comparing');
+      }
+      progressText.textContent = `Progress: 100% - Sorting Complete`;
+    }
+    
+    // Event listener to start the simulation
+    startBtn.addEventListener('click', async () => {
+      // Disable buttons during sorting
+      startBtn.disabled = true;
+      resetBtn.disabled = true;
+      setArrayBtn.disabled = true;
+      resetMetrics();
+      await selectionSortVisual(array);
+      startBtn.disabled = false;
+      resetBtn.disabled = false;
+      setArrayBtn.disabled = false;
+    });
+    
+    // Reset Event: Re-render the initial array and reset progress and metrics
+    resetBtn.addEventListener('click', () => {
+      renderArray(array);
+      progressText.textContent = 'Progress: 0%';
+      resetMetrics();
+    });
+    
+    // Set Array Event: Parse user input and update the array
+    setArrayBtn.addEventListener('click', () => {
+      const input = arrayInput.value.trim();
+      if (input) {
+        const newArray = input.split(',').map(item => parseInt(item.trim(), 10)).filter(item => !isNaN(item));
+        if (newArray.length > 0) {
+          array = newArray;
+          renderArray(array);
+          progressText.textContent = 'Progress: 0%';
+          resetMetrics();
+        } else {
+          alert('Please enter valid numbers separated by commas.');
+        }
+      }
+    });
+    
+    // Initial render of default array
+    renderArray(array);
+  </script>
+</body>
+</html>
